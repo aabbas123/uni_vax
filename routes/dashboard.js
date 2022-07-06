@@ -121,9 +121,8 @@ router.put("/profile/:id", authorization, async (req, res) => {
 
 
 router.post("/more_information", authorization, async (req, res) => {
-    try {
-        const { name, address, phone_number,blood_type,emergency_contact,allergies,medication,medical_condition,social_secuirty_number,insurance_provider,group_number,preferred_hospital,preferred_pharmacy,user_id } = req.body;
-        const Info = await pool.query(" INSERT INTO more_information(Primary_care_Doctor_name,Primary_care_Doctor_address,Primary_care_Doctor_phone_number,BLOOD_TYPE,Emergency_Contact,Allergies,Medcation,Social_Security_Number,Insurance_Provider,Group_Number,Preferred_Hospital,Preferred_Pharmacy,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *", [name, address, phone_number,blood_type,emergency_contact,allergies,medication,medical_condition,social_secuirty_number,insurance_provider,group_number,preferred_hospital,preferred_pharmacy,req.user.id]);
+try{      const { name, address, phone_number,blood_type,emergency,allergic,medicat,condition,number,provider,group,hospital,pharmacy ,user_id } = req.body;
+        const Info = await pool.query(" INSERT INTO more_information(Primary_care_Doctor_name,Primary_care_Doctor_address,Primary_care_Doctor_phone_number,BLOOD_TYPE,Emergency_Contact,Allergies,Medication,Medical_Condition,Social_Security_Number,Insurance_Provider,Group_Number,Preferred_Hospital,Preferred_Pharmacy,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *", [name, address, phone_number,blood_type,emergency,allergic,medicat,condition,number,provider,group,hospital,pharmacy,req.user.id]);
 
         res.json(Info.rows[0]);
     }

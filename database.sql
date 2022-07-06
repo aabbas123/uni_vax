@@ -71,23 +71,19 @@ CREATE TABLE more_information(
       BLOOD_TYPE VARCHAR(255) NOT NULL,
       Emergency_Contact VARCHAR(255) NOT NULL,
       Allergies VARCHAR(255) NOT NULL,
-      Medcation VARCHAR(255) NOT NULL,
+      Medication VARCHAR(255) NOT NULL,
+      Medical_Condition VARCHAR(255) NOT NULL,
       Social_Security_Number VARCHAR(255) NOT NULL,
       Insurance_Provider VARCHAR(255) NOT NULL,
       Group_Number VARCHAR(255) NOT NULL,
       Preferred_Hospital VARCHAR(255) NOT NULL,
       Preferred_Pharmacy VARCHAR(255) NOT NULL,
+      
       PRIMARY KEY (more_information_id),
       user_id uuid,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     child_id SERIAL,
-    FOREIGN KEY (child_id) REFERENCES child(child_id) 
-
-
-
-
-
-
+    FOREIGN KEY (child_id) REFERENCES child(child_id)
 
 
 );
