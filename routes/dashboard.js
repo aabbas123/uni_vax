@@ -3,7 +3,7 @@ const authorization = require("../middleware/authorization");
 const bcrypt = require("bcrypt");
 //const authorize = require("../middleware/authorize");
 const pool = require("../db");
-const getage =require("../utils/getage");
+const getDays = require("../utils/getDays");
 
 
 
@@ -60,7 +60,7 @@ router.post("/vaccine_detail", authorization, async (req, res) => {
 router.put("/vaccine_detail/:id", authorization, async (req, res) => {
     try {
         const { id } = req.params;
-        const { vax_name, vax_date, name_of_provider, user_id } = req.body;
+        const { vax_name, vax_date, name_of_provider } = req.body;
 
         const Updatevaccine = await pool.query("UPDATE vaccine_detail SET vax_name = $1, vax_date = $2 , name_of_provider = $3 WHERE vax_id = $4 AND user_id = $5 RETURNING *", [vax_name, vax_date, name_of_provider, id, req.user.id]);
 
@@ -68,6 +68,9 @@ router.put("/vaccine_detail/:id", authorization, async (req, res) => {
         if (Updatevaccine.rows.length == 0) {
             return res.json("This vaccine_information is not yours");
         }
+
+
+
         res.json("Vaccine_detail has been updated");
 
     }
@@ -79,30 +82,17 @@ router.put("/vaccine_detail/:id", authorization, async (req, res) => {
 
 
 
-// Create profile information of parent 
 
-router.post("/profile", authorization, async (req, res) => {
-    try {
-        const {  first_name, last_name, phone_number, email,dob,address,user_id } = req.body;
-        const userInfo = await pool.query(" INSERT INTO profile(first_name,last_name,phone_number,email,DOB,Address,user_id) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *", [first_name, last_name, phone_number, email,dob,address,req.user.id]);
-
-        res.json(userInfo.rows[0]);
-    }
-    catch (err) {
-        console.error(err.message);
-    }
-
-});
 
 
 // Update the profile information of parent
 
-router.put("/profile/:id", authorization, async (req, res) => {
+router.put("/user/:user_id/profile/:profile_id", authorization, async (req, res) => {
     try {
-        const { id } = req.params;
-        const { first_name, last_name, phone_number, email,dob,address, user_id } = req.body;
+        const { user_id, profile_id } = req.params;
+        const { first_name, last_name, phone_number, email, dob, address } = req.body;
 
-        const Updateprofile = await pool.query("UPDATE profile SET first_name = $1, last_name = $2 , phone_number = $3, email=$4,DOB=$5, Address=$6 WHERE profile_id = $7 AND user_id = $8 RETURNING *", [first_name, last_name, phone_number, email,dob,address, id, req.user.id]);
+        const Updateprofile = await pool.query("UPDATE profile SET first_name = $1, last_name = $2 , phone_number = $3, email=$4,DOB=$5, Address=$6 WHERE profile_id = $7 AND user_id = $8 RETURNING *", [first_name, last_name, phone_number, email, dob, address, profile_id, req.user.id]);
 
 
         if (Updateprofile.rows.length == 0) {
@@ -118,13 +108,38 @@ router.put("/profile/:id", authorization, async (req, res) => {
 
 
 // Create the more information in the profile
-
-
 router.post("/more_information", authorization, async (req, res) => {
-try{      const { name, address, phone_number,blood_type,emergency,allergic,medicat,condition,number,provider,group,hospital,pharmacy ,user_id } = req.body;
-        const Info = await pool.query(" INSERT INTO more_information(Primary_care_Doctor_name,Primary_care_Doctor_address,Primary_care_Doctor_phone_number,BLOOD_TYPE,Emergency_Contact,Allergies,Medication,Medical_Condition,Social_Security_Number,Insurance_Provider,Group_Number,Preferred_Hospital,Preferred_Pharmacy,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *", [name, address, phone_number,blood_type,emergency,allergic,medicat,condition,number,provider,group,hospital,pharmacy,req.user.id]);
+
+    try {
+
+
+        const { name, address, phone_number, blood_type, emergency, allergic, medicat, condition, number, provider, group, hospital, pharmacy, user_id } = req.body;
+        const Info = await pool.query(" INSERT INTO more_information(Doctor_name,Doctor_address,Doctor_phone_number,BLOOD_TYPE,Emergency_Contact,Allergies,Medication,Medical_Condition,Social_Security_Number,Insurance_Provider,Group_Number,Preferred_Hospital,Preferred_Pharmacy,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *", [name, address, phone_number, blood_type, emergency, allergic, medicat, condition, number, provider, group, hospital, pharmacy, req.user.id]);
 
         res.json(Info.rows[0]);
+    }
+    catch (err) {
+        console.error(err.message);
+    }
+
+});
+
+
+
+
+// Update the more information
+
+router.put("/more_information/:id", authorization, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { name, address, phone_number, blood_type, emergency, allergic, medicat, condition, number, provider, group, hospital, pharmacy } = req.body;
+        const Info = await pool.query(" UPDATE more_information SET Doctor_name=$1,Doctor_address=$2,Doctor_phone_number=$3,BLOOD_TYPE=$4,Emergency_Contact=$5,Allergies=$6,Medication=$7,Medical_Condition=$8,Social_Security_Number=$9,Insurance_Provider=$10,Group_Number=$11,Preferred_Hospital=$12,Preferred_Pharmacy=$13 WHERE more_information_id=$14 AND user_id=$15 RETURNING *", [name, address, phone_number, blood_type, emergency, allergic, medicat, condition, number, provider, group, hospital, pharmacy, id, req.user.id]);
+
+        if (Info.rows.length == 0) {
+            return res.json("This not is your information");
+        }
+        res.json("Your information has been updated");
     }
     catch (err) {
         console.error(err.message);
@@ -143,35 +158,31 @@ try{      const { name, address, phone_number,blood_type,emergency,allergic,medi
 
 
 
-
-
-
-
-
-
 // Add child 
-router.post("/child", authorization, async (req, res) => {
+router.post("/family", authorization, async (req, res) => {
     try {
         const { firstName, lastName, dateOfbirth } = req.body;
 
-        if(getage(dateOfbirth) >= 18){
-            return res.status(400).json({ message : "Users above 18 can create their own account "});
-        }
+        //  if(getage(dateOfbirth) >= 18){
+        //    return res.status(400).json({ message : "Users above 18 can create their own account "});
+        //
 
 
 
-        const user = await pool.query("SELECT * FROM child WHERE child_first_name =$1 AND child_last_name=$2 AND user_id=$3", [firstName, lastName, req.user.id]);
+
+
+        const user = await pool.query("SELECT * FROM family WHERE first_name =$1 AND last_name=$2 AND user_id=$3", [firstName, lastName, req.user.id]);
 
 
         if (user.rows.length != 0) {
-            return res.status(401).send("Child already exist");
+            return res.status(401).send(" Member already exist");
         }
 
 
 
-        const newChild = await pool.query("INSERT INTO child (child_first_name,child_last_name,date_of_birth,user_id) VALUES($1,$2,$3,$4) RETURNING *", [firstName, lastName, dateOfbirth, req.user.id]);
+        const newMember = await pool.query("INSERT INTO family (first_name,last_name,date_of_birth,user_id) VALUES($1,$2,$3,$4) RETURNING *", [firstName, lastName, dateOfbirth, req.user.id]);
 
-        return res.json({ message: "child account created succssfuly", data: newChild.rows[0] });
+        return res.json({ message: " Account created succssfuly", data: newMember.rows[0] });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
         console.log(err);
@@ -196,22 +207,22 @@ router.post("/child", authorization, async (req, res) => {
 
 // create the vaccine for the child
 
-router.post("/child/:id/vaccine_detail", authorization, async (req, res) => {
+router.post("/family/:id/vaccine_detail", authorization, async (req, res) => {
     try {
         const { id } = req.params;
         const { vax_name, vax_date, name_of_provider } = req.body;
 
-        const childexist = await pool.query("SELECT * FROM child WHERE child_id =$1", [id]);
-        if (childexist.rows.length <= 0) {
-            return res.status(400).json({ message: "This child does not exist" });
+        const memberExist = await pool.query("SELECT * FROM family WHERE family_id =$1", [id]);
+        if (memberExist.rows.length <= 0) {
+            return res.status(400).json({ message: "This Family member does not exist" });
         }
-        const vaccineInUse = await pool.query("SELECT vax_name from vaccine_detail WHERE vax_name = $1 AND child_id =$2 AND  user_id=$3", [vax_name, id, req.user.id]);
+        const vaccineInUse = await pool.query("SELECT vax_name from vaccine_detail WHERE vax_name = $1 AND family_id =$2 AND  user_id=$3", [vax_name, id, req.user.id]);
         if (vaccineInUse.rows.length > 0) {
             return res.status(405).send("You already got this vaccine ");
         }
 
         const newVaccine = await pool.query(
-            "INSERT INTO vaccine_detail (vax_name, vax_date,name_of_provider,child_id,user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *", [vax_name, vax_date, name_of_provider, id, req.user.id]
+            "INSERT INTO vaccine_detail (vax_name, vax_date,name_of_provider,family_id,user_id) VALUES ($1, $2, $3, $4, $5) RETURNING *", [vax_name, vax_date, name_of_provider, id, req.user.id]
         );
         res.json(newVaccine.rows[0]);
     } catch (err) {
@@ -221,17 +232,17 @@ router.post("/child/:id/vaccine_detail", authorization, async (req, res) => {
 
 //update the vaccine_detail of child
 
-router.put("/child/:id1/vaccine_detail/:id", authorization, async (req, res) => {
+router.put("/family/:family_id/vaccine_detail/:id", authorization, async (req, res) => {
     try {
-        const {id1, id } = req.params;
+        const { family_id, id } = req.params;
         const { vax_name, vax_date, name_of_provider } = req.body;
 
-        const Updatevaccine = await pool.query("UPDATE vaccine_detail SET vax_name = $1, vax_date = $2 , name_of_provider = $3 WHERE vax_id = $4 AND child_id = $5 RETURNING *", [vax_name, vax_date, name_of_provider, id, id1]);
+        const Updatevaccine = await pool.query("UPDATE vaccine_detail SET vax_name = $1, vax_date = $2 , name_of_provider = $3 WHERE vax_id = $4 AND family_id = $5 RETURNING *", [vax_name, vax_date, name_of_provider, id, family_id]);
 
 
-       // if (Updatevaccine.rows.length == 0) {
-       //     return res.json("This vaccine_information is not yours");
-       // }
+        if (Updatevaccine.rows.length == 0) {
+            return res.json("This vaccine_information is not yours");
+        }
         res.json("Vaccine_detail has been updated");
 
     }
@@ -244,11 +255,11 @@ router.put("/child/:id1/vaccine_detail/:id", authorization, async (req, res) => 
 
 //create the profile of child 
 
-router.post("/child/:id/profile", authorization, async (req, res) => {
+router.post("/family/:id/profile", authorization, async (req, res) => {
     try {
         const { id } = req.params;
-        const {  first_name, last_name, phone_number, email,dob,address } = req.body;
-        const userInfo = await pool.query(" INSERT INTO profile(first_name,last_name,phone_number,email,DOB,Address,user_id,child_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *", [first_name, last_name, phone_number, email,dob,address,req.user.id,id]);
+        const { first_name, last_name, dateOfbirth, address, country } = req.body;
+        const userInfo = await pool.query(" INSERT INTO profile(first_name,last_name,date_of_birth,home_address,country_state,user_id,family_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *", [first_name, last_name, dateOfbirth, address, country, req.user.id, id]);
 
         res.json(userInfo.rows[0]);
     }
@@ -262,33 +273,112 @@ router.post("/child/:id/profile", authorization, async (req, res) => {
 
 // update the profile of child
 
-router.put("/child/:id1/profile/:id", authorization, async (req, res) => {
+router.put("/family/:family_id/profile/:profile_id", authorization, async (req, res) => {
     try {
-        const { id1, id } = req.params;
-        const { first_name, last_name, phone_number, email,dob,address,child_id} = req.body;
+        const { family_id, profile_id } = req.params;
+        const { first_name, last_name, dateOfbirth, address, country } = req.body;
 
-        const Updateprofile = await pool.query("UPDATE profile SET first_name = $1, last_name = $2 , phone_number = $3, email=$4,DOB=$5, Address=$6 WHERE profile_id = $7 AND child_id = $8 RETURNING *", [first_name, last_name, phone_number, email,dob,address,id,id1]);
+        const Updateprofile = await pool.query("UPDATE profile SET first_name = $1, last_name = $2 , date_of_birth = $3, home_address=$4,country_state=$5 WHERE profile_id = $7 AND family_id = $8 RETURNING *", [first_name, last_name, dateOfbirth, address, country, family_id, profile_id]);
 
 
         if (Updateprofile.rows.length == 0) {
             return res.json("This not is your profile");
         }
-        res.status(200).json({message:"Your profile has been updated"});
+        res.status(200).json({ message: "Your profile has been updated" });
 
     }
     catch (err) {
         console.error(err.message);
-        
+
     }
 });
 
 
 
 
+router.post("/family/:id/more_information", authorization, async (req, res) => {
+
+    try {
+        const { id } = req.params;
+
+        const { name, address, phone_number, blood_type, emergency, allergic, medicat, condition, number, provider, group, hospital, pharmacy, family_id } = req.body;
+        const Info = await pool.query(" INSERT INTO more_information(Doctor_name,Doctor_address,Doctor_phone_number,BLOOD_TYPE,Emergency_Contact,Allergies,Medication,Medical_Condition,Social_Security_Number,Insurance_Provider,Group_Number,Preferred_Hospital,Preferred_Pharmacy,family_id,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *", [name, address, phone_number, blood_type, emergency, allergic, medicat, condition, number, provider, group, hospital, pharmacy, id, req.user.id]);
+
+        res.json(Info.rows[0]);
+    }
+    catch (err) {
+        console.error(err.message);
+    }
+
+});
+
+
+router.post("/appointment", authorization, async (req, res) => {
+
+    try {
+        const { id } = req.user;
+        const { date, name, location } = req.body;
+        if (!date || !name || !location) {
+            return res.status(400).json({ message: "All fields required" });
+        }
+        const apt = await pool.query("SELECT * FROM appointment WHERE apt_date=$1 AND apt_vax_name = $2 AND user_id=$3 ", [date, name, id]);
+        if (apt.rows.length != 0) {
+            return res.status(400).json({ message: "Your appointment is already scheduled " })
+        }
+        const newApt = await pool.query("INSERT INTO appointment (apt_date,apt_vax_name,apt_location,user_id) VALUES($1,$2,$3,$4)", [date, name, location, id]);
+
+        return res.status(201).json({ message: "Your appointment has been scheduled successfully" });
+
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).json({ message: "server error" });
+    }
+
+});
+
+router.get("/appointment", authorization, async (req, res) => {
+
+    try {
+        const { id } = req.user;
+        
+        
+        const apt = await pool.query("SELECT * FROM appointment WHERE user_id=$1 ", [id]);
+        
+        
+
+        return res.status(201).json({ appointments: apt.rows });
+
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).json({ message: "server error" });
+    }
+
+});
+
+router.get("/appointment/:id", authorization, async (req, res) => {
+
+    try {
+        const user_id= req.user.id;
+        const appointment_id=req.params.id;
+        
+        
+        const apt = await pool.query("SELECT * FROM appointment WHERE user_id=$1 AND appointment_id =$2", [user_id,appointment_id]);
+       // if(getDays(apt.rows[0].apt_date) <=7  ){      
+      //  }
+      apt.rows[0].remainingDays=getDays(apt.rows[0].apt_date);
+        return res.status(201).json(apt.rows[0]);
+
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).json({ message: "server error" });
+    }
+
+});
 
 
 
-   
+
+
 
 
 

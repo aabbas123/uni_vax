@@ -2,7 +2,7 @@ const router = require("express").Router();
 const authorization = require("../middleware/authorization");
 
 const pool = require("../db");
-const getage =require("../utils/getage");
+const getage =require("../utils/getDays");
 
 
 router.get("",async (req, res) => {
@@ -30,6 +30,15 @@ router.get("/:id",async(req,res) => {
 
 })
 
-
+router.delete("/users/:id",async(req, res) => {
+    try{
+        const { id } = req.params;
+        const deletuser = await pool.query(" DELETE FROM users WHERE user_id =$1",[id]);
+        res.json("User has been deleted ");
+    }catch(err){
+      console.error(err.message);
+    }
+})
+// crud for children
 
 module.exports = router;

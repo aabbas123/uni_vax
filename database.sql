@@ -2,8 +2,9 @@ CREATE DATABASE univax;
 CREATE TABLE users(
 user_id UUID  DEFAULT uuid_generate_v4(),
 
-user_name VARCHAR(255) NOT NULL,
+
 user_email VARCHAR(255) NOT NULL UNIQUE,
+user_phone VARCHAR(25) NOT NULL,
 user_password VARCHAR(255) NOT NULL,
 
 PRIMARY KEY (user_id)
@@ -20,77 +21,81 @@ CREATE TABLE vaccine_detail(
     
     user_id uuid,
 
-    child_id SERIAL,
+    family_id INT,
     PRIMARY KEY (vax_id),  
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    FOREIGN KEY (child_id) REFERENCES child(child_id) 
-    
-    
-
+    FOREIGN KEY (family_id) REFERENCES family(family_id) 
 );
 
 CREATE TABLE profile(
     profile_id SERIAL,
     PRIMARY KEY (profile_id),
-    
     first_name VARCHAR(50) NOT NULL,
-    
     last_name VARCHAR(50) NOT NULL,
-    phone_number VARCHAR(50) NOT NULL,
-    email VARCHAR(255) NOT Null,
-    DOB VARCHAR(255) NOT Null,
-    Address VARCHAR(255) NOT Null,
+    date_of_birth VARCHAR(255) NOT Null,
+    home_address VARCHAR(255) NOT Null,
+    country_state VARCHAR(255) NOT NULL,
     user_id uuid,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    child_id SERIAL,
-    FOREIGN KEY (child_id) REFERENCES child(child_id) 
+    family_id INT,
+    FOREIGN KEY (family_id) REFERENCES family(family_id) 
     
 );
 
-CREATE TABLE child(
-    child_id SERIAL,
-    child_first_name VARCHAR(50) NOT NULL,
-    child_last_name VARCHAR (50) NOT NULL,
+CREATE TABLE family(
+    family_id SERIAl,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR (50) NOT NULL,
     date_of_birth VARCHAR(30) NOT NULL,
-    
-    PRIMARY KEY (child_id),
-    
-user_id uuid,
+    PRIMARY KEY (family_id),
+    user_id uuid,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
-    
-
-);
+    );
 
 
 CREATE TABLE more_information(
       more_information_id SERIAL,
-      
-      Primary_care_Doctor_name VARCHAR(255) NOT NULL,
-      Primary_care_Doctor_address VARCHAR(255) NOT NULL,
-      Primary_care_Doctor_phone_number VARCHAR(255) NOT NULL,
-      BLOOD_TYPE VARCHAR(255) NOT NULL,
-      Emergency_Contact VARCHAR(255) NOT NULL,
-      Allergies VARCHAR(255) NOT NULL,
-      Medication VARCHAR(255) NOT NULL,
-      Medical_Condition VARCHAR(255) NOT NULL,
-      Social_Security_Number VARCHAR(255) NOT NULL,
-      Insurance_Provider VARCHAR(255) NOT NULL,
-      Group_Number VARCHAR(255) NOT NULL,
-      Preferred_Hospital VARCHAR(255) NOT NULL,
-      Preferred_Pharmacy VARCHAR(255) NOT NULL,
-      
+      Doctor_name VARCHAR(255),
+      Doctor_address VARCHAR(255) ,
+      Doctor_phone_number VARCHAR(255) ,
+      BLOOD_TYPE VARCHAR(255),
+      Emergency_Contact VARCHAR(255) ,
+      Allergies VARCHAR(255) ,
+      Medication VARCHAR(255),
+      Medical_Condition VARCHAR(255) ,
+      Social_Security_Number VARCHAR(255),
+      Insurance_Provider VARCHAR(255) ,
+      Group_Number VARCHAR(255) ,
+      Preferred_Hospital VARCHAR(255) ,
+      Preferred_Pharmacy VARCHAR(255) ,
       PRIMARY KEY (more_information_id),
       user_id uuid,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
-    child_id SERIAL,
-    FOREIGN KEY (child_id) REFERENCES child(child_id)
+    family_id INT,
+    FOREIGN KEY (family_id) REFERENCES family(family_id)
+);
 
+CREATE TABLE appointment(
+    appointment_id SERIAL PRIMARY KEY,
+    apt_date VARCHAR(255) NOT NULL,
+    apt_vax_name VARCHAR(255) NOT NULL,
+    apt_location VARCHAR(255) NOT NULL,
+
+family_id INT,
+     user_id uuid,
+    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (family_id) REFERENCES family(family_id) ON DELETE CASCADE
 
 );
 
 
+CREATE TABLE Gender
+(   gender_id SERIAL PRIMARY KEY,
+    gender TEXT,
+    user_id uuid,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
 
-
+);
 
 
 
