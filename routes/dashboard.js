@@ -90,9 +90,9 @@ router.put("/vaccine_detail/:id", authorization, async (req, res) => {
 router.put("/user/:user_id/profile/:profile_id", authorization, async (req, res) => {
     try {
         const { user_id, profile_id } = req.params;
-        const { first_name, last_name, phone_number, email, dob, address } = req.body;
+        const { first_name, last_name,dateOfbirth,gender, address,country } = req.body;
 
-        const Updateprofile = await pool.query("UPDATE profile SET first_name = $1, last_name = $2 , phone_number = $3, email=$4,DOB=$5, Address=$6 WHERE profile_id = $7 AND user_id = $8 RETURNING *", [first_name, last_name, phone_number, email, dob, address, profile_id, req.user.id]);
+        const Updateprofile = await pool.query("UPDATE profile SET first_name = $1, last_name = $2 ,date_of_birth=$3, gender = $4,  home_address=$5, country_state=$6 WHERE profile_id = $7 AND user_id = $8 RETURNING *", [first_name, last_name,dateOfbirth,gender,address,country, profile_id, req.user.id]);
 
 
         if (Updateprofile.rows.length == 0) {
@@ -258,8 +258,8 @@ router.put("/family/:family_id/vaccine_detail/:id", authorization, async (req, r
 router.post("/family/:id/profile", authorization, async (req, res) => {
     try {
         const { id } = req.params;
-        const { first_name, last_name, dateOfbirth, address, country } = req.body;
-        const userInfo = await pool.query(" INSERT INTO profile(first_name,last_name,date_of_birth,home_address,country_state,user_id,family_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *", [first_name, last_name, dateOfbirth, address, country, req.user.id, id]);
+        const { first_name, last_name,dateOfbirth,gender, address,country } = req.body;
+        const userInfo = await pool.query(" INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country_state,user_id,family_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *", [first_name, last_name, dateOfbirth,gender, address, country, req.user.id, id]);
 
         res.json(userInfo.rows[0]);
     }
@@ -376,7 +376,28 @@ router.get("/appointment/:id", authorization, async (req, res) => {
 });
 
 
+router.post("/family/:family_id/appointment", authorization, async (req, res) => {
 
+    try {
+        const { family_id } = req.params;
+        const { date, name, location } = req.body;
+        if (!date || !name || !location) {
+            return res.status(400).json({ message: "All fields required" });
+        }
+        const apt = await pool.query("SELECT * FROM appointment WHERE apt_date=$1 AND apt_vax_name = $2 AND family_id=$3 ", [date, name, family_id]);
+        if (apt.rows.length != 0) {
+            return res.status(400).json({ message: "Your appointment is already scheduled " })
+        }
+        const newApt = await pool.query("INSERT INTO appointment (apt_date,apt_vax_name,apt_location,family_id,user_id) VALUES($1,$2,$3,$4,$5)", [date, name, location, family_id,req.user.id]);
+
+        return res.status(201).json({ message: "Your appointment has been scheduled successfully" });
+
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).json({ message: "server error" });
+    }
+
+});
 
 
 

@@ -41,4 +41,40 @@ router.delete("/users/:id",async(req, res) => {
 })
 // crud for children
 
+
+
+router.get("/family/:id/:id2",async (req, res) => {
+    try{
+        const{ id,id2 } = req.body;
+        const family =await pool.query("SELECT * from family WHERE family_id = $1 AND user_id=$2",[id,id2]);
+        return res.status(200).json({family:family.rows});
+
+    }  catch(err){
+        return res.status(500).json({message : "server error"});
+    }
+})
+
+
+
+router.get("/:id",async(req,res) => {
+    try{
+        const{id} = req.params;
+        const user = await pool.query("SELECT * FROM family WHERE family_id=$1",[id]);
+        
+        return res.status(200).json({user:user.rows});
+        
+
+    }catch(err){
+        console.log(err.message)
+        return res.status(500).json({message: "sever error"});
+    }
+
+})
+
+
+
+
+
+
+
 module.exports = router;

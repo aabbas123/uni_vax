@@ -6,6 +6,10 @@ user_id UUID  DEFAULT uuid_generate_v4(),
 user_email VARCHAR(255) NOT NULL UNIQUE,
 user_phone VARCHAR(25) NOT NULL,
 user_password VARCHAR(255) NOT NULL,
+reset_token VARCHAR(255),
+verification_token VARCHAR(255),
+isverified BOOLEAN,
+
 
 PRIMARY KEY (user_id)
 
@@ -33,6 +37,7 @@ CREATE TABLE profile(
     first_name VARCHAR(50) NOT NULL,
     last_name VARCHAR(50) NOT NULL,
     date_of_birth VARCHAR(255) NOT Null,
+    gender VARCHAR(255) NOT NULL,
     home_address VARCHAR(255) NOT Null,
     country_state VARCHAR(255) NOT NULL,
     user_id uuid,

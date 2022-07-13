@@ -4,15 +4,27 @@ const bcrypt = require("bcrypt");
 const jwtGenerator = require("../utils/jwtGenerator");
 const validInfo = require("../middleware/validInfo");
 const authorization = require("../middleware/authorization");
+const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
+
+function transporter() {
+    return nodemailer.createTransport({
+        service: "Gmail",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
+        }
+    })
+}
 
 
 router.post("/register", validInfo, async (req, res) => {
 
     try {
 
-        const { email, phoneNumber, password, firstName, lastName, dateOfbirth, home, country,genderType } = req.body;
+        const { email, phoneNumber, password, firstName, lastName, dateOfbirth, home, country, genderType } = req.body;
         //verify all the fields
-        if (!email || !phoneNumber || !password || !firstName || !lastName || !dateOfbirth || !home || !country) {
+        if (!email || !phoneNumber || !password || !firstName || !lastName || !dateOfbirth || !home || !country || !genderType) {
             return res.status(400).json({ message: "All input fields are required " })
         }
         // verify if user exists
@@ -23,7 +35,7 @@ router.post("/register", validInfo, async (req, res) => {
         //return success response 
 
         // verify if user exists
-        const user = await pool.query("SELECT * FROM users WHERE user_email =$1 AND user_phone =$2", [email,phoneNumber]);
+        const user = await pool.query("SELECT * FROM users WHERE user_email =$1 AND user_phone =$2", [email, phoneNumber]);
 
 
         if (user.rows.length != 0) {
@@ -34,23 +46,32 @@ router.post("/register", validInfo, async (req, res) => {
 
         const salt = await bcrypt.genSalt(saltRound);
         const bcryptPassword = await bcrypt.hash(password, salt);
+        const verificationToken = jwt.sign({ email: email }, process.env.VERFICATION_KEY, { expiresIn: "1hr" });
 
-        const newUser = await pool.query("INSERT INTO users (user_email,user_phone,user_password) VALUES($1,$2,$3) RETURNING *", [email, phoneNumber, bcryptPassword]);
+        const newUser = await pool.query("INSERT INTO users (user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5) RETURNING *", [email, phoneNumber, bcryptPassword, verificationToken, false]);
         //res.json(newUser.rows[0]);
-        
-        const user_id=newUser.rows[0].user_id;
-        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,home_address,country_state,user_id) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [firstName, lastName, dateOfbirth, home, country, user_id]);
+        const user_id = newUser.rows[0].user_id;
+        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country_state,user_id) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, user_id]);
+     
+        const emailData = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Account verification",
+            html: `<h2>UNIVERSAL_VAX</h2>
+    <p> Hi</p>
+    <p> plz verify your account by clicking on this link</p>
+    <p>${process.env.CLIENT_URL}/auth/verify/${verificationToken}</p>  
+    `  }
 
+    let info = await transporter().sendMail(emailData);
+        console.log(info.messageId);
+        return res.status(200).json({ message: "Register success, verfication email has been sent" });
 
-      const newGen = await pool.query("INSERT INTO Gender(gender,user_id) VALUES($1,$2) RETURNING *",[genderType,user_id]);
-
-
-
-        const token = jwtGenerator(newUser.rows[0].user_id);
-        return res.json({ token });
+        //const token = jwtGenerator(newUser.rows[0].user_id);
+        //return res.json({ token });
 
     } catch (err) {
-        console.error(err.message)
+        console.error(err)
         res.status(500).send("Server error")
     }
 
@@ -59,19 +80,42 @@ router.post("/register", validInfo, async (req, res) => {
 });
 
 
+router.get("/verify/:token",async(req,res)=>{
+    try{
+        const { token } = req.params;
+
+        let decoded = jwt.verify(token, process.env.VERFICATION_KEY);
+        const { email } = decoded;
+        const user = await pool.query("SELECT * FROM users where user_email = $1 AND verification_token=$2",[email,token]);
+        if(user.rows.length===0){
+            return res.status(400).json({message:"invalid token"});
+        }
+        const updateUser =await pool.query("UPDATE users SET isverified =$1,verification_token=$2 WHERE user_email =$3 AND verification_token=$4",[false,'',email,token]);
+        const tok = jwtGenerator(user.rows[0].user_id);
+        return res.json({ token:tok });
+        
+
+
+    } catch(err){
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+})
+
+
 router.post("/login", async (req, res) => {
 
     try {
         //1 destructure the req.body
 
-        const { email,phoneNumber, password } = req.body;
+        const { email, phoneNumber, password } = req.body;
 
-        if(!email && !phoneNumber && !password){
-            return res.status(400).json({message : " email,  phone number or password is missing "});
+        if (!email && !phoneNumber && !password) {
+            return res.status(400).json({ message: " email,  phone number or password is missing " });
         }
 
         //2. check if user does not exist (if not then we throw error)
-        const user = await pool.query("SELECT * FROM users WHERE user_email = $1 OR user_phone =$2", [email,phoneNumber]);
+        const user = await pool.query("SELECT * FROM users WHERE user_email = $1 OR user_phone =$2", [email, phoneNumber]);
 
         if (user.rows.length === 0) {
             return res.status(401).json(" incorrect credentials ");
@@ -101,13 +145,83 @@ router.post("/login", async (req, res) => {
 
 
 
-// child register
+router.get("/forgot", async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await pool.query("SELECT * FROM users WHERE user_email = $1", [email]);
+        if (user.rows.length === 0) {
+            return res.status(400).json({ message: "This user does not exist" });
+        }
+
+        const token = jwt.sign({ email, id: user.rows[0].user_id }, process.env.PASSWORD_RESET_KEY, { expiresIn: "15m" });
+
+        const updateUser = await pool.query("UPDATE users SET reset_token = $1 WHERE user_email =$2", [token, email]);
+        const emailData = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "PASSWORD RESET",
+            html: `<h2>UNIVERSAL_VAX</h2>
+            <p> Hi</p>
+            <p> Follow the link below to reset your password</p>
+            <p>${process.env.CLIENT_URL}/auth/reset/${token}</p>  
+            `  }
+
+        let info = await transporter().sendMail(emailData);
+        console.log(info.messageId);
+        return res.status(200).json({ message: "Reset email sent" });
 
 
 
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send("Server error");
+    }
+})
+
+
+router.get("/reset/:token", async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        let decoded = jwt.verify(token, process.env.PASSWORD_RESET_KEY);
+        const { id, email } = decoded;
+        return res.status(200).json({ message: "token is Valid" });
+    } catch (err) {
+        console.log(err.message);
+        res.status(500).json({ message: "Server error" });
+
+    }
+
+})
 
 
 
+router.put('/update-password', async (req, res) => {
+
+
+    try {
+        const { token, password } = req.body;
+        //const{password} = req.body.password;
+
+        let decoded = jwt.verify(token, process.env.PASSWORD_RESET_KEY);
+        const { email, id } = decoded;
+        const availableUser = await pool.query("SELECT * FROM users WHERE user_id=$1 AND user_email=$2 AND reset_token=$3", [id, email, token]);
+        if (availableUser.rows.length === 0) {
+            return res.status(404).json({ message: "Invalid token" });
+        }
+        const saltRound = 10;
+        const salt = await bcrypt.genSalt(saltRound);
+        const passwordHash = await bcrypt.hash(password, salt);
+        const updatedPass = await pool.query("UPDATE users SET user_password =$1 , reset_token = $2 WHERE user_email=$3 AND user_id=$4 AND reset_token=$5 ", [passwordHash, '', email, id, token]);
+        //console.log(updatedPass);
+        return res.status(200).json({ message: "Your password has been updated " });
+    }
+    catch (err) {
+        console.log(err.message);
+        res.status(500).json({ message: "Server error" });
+    }
+
+});
 
 
 
