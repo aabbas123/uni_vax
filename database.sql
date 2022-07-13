@@ -2,7 +2,7 @@ CREATE DATABASE univax;
 CREATE TABLE users(
 user_id UUID  DEFAULT uuid_generate_v4(),
 
-
+user_name VARCHAR(255) NOT NULL,
 user_email VARCHAR(255) NOT NULL UNIQUE,
 user_phone VARCHAR(25) NOT NULL,
 user_password VARCHAR(255) NOT NULL,
@@ -39,7 +39,9 @@ CREATE TABLE profile(
     date_of_birth VARCHAR(255) NOT Null,
     gender VARCHAR(255) NOT NULL,
     home_address VARCHAR(255) NOT Null,
-    country_state VARCHAR(255) NOT NULL,
+    country VARCHAR(255) NOT NULL,
+    state VARCHAR(255) NOT NULL,
+    zip_code VARCHAR(255) NOT NULL,
     user_id uuid,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     family_id INT,

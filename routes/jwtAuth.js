@@ -22,7 +22,7 @@ router.post("/register", validInfo, async (req, res) => {
 
     try {
 
-        const { email, phoneNumber, password, firstName, lastName, dateOfbirth, home, country, genderType } = req.body;
+        const { userName,email, phoneNumber, password, firstName, lastName, dateOfbirth, home, country,state,zip, genderType } = req.body;
         //verify all the fields
         if (!email || !phoneNumber || !password || !firstName || !lastName || !dateOfbirth || !home || !country || !genderType) {
             return res.status(400).json({ message: "All input fields are required " })
@@ -48,10 +48,10 @@ router.post("/register", validInfo, async (req, res) => {
         const bcryptPassword = await bcrypt.hash(password, salt);
         const verificationToken = jwt.sign({ email: email }, process.env.VERFICATION_KEY, { expiresIn: "1hr" });
 
-        const newUser = await pool.query("INSERT INTO users (user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5) RETURNING *", [email, phoneNumber, bcryptPassword, verificationToken, false]);
+        const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName,email, phoneNumber, bcryptPassword, verificationToken, false]);
         //res.json(newUser.rows[0]);
         const user_id = newUser.rows[0].user_id;
-        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country_state,user_id) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, user_id]);
+        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country,state,zip, user_id]);
      
         const emailData = {
             from: process.env.EMAIL_USER,
