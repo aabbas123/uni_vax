@@ -43,7 +43,7 @@ CREATE TABLE profile(
     state VARCHAR(255) NOT NULL,
     zip_code VARCHAR(255) NOT NULL,
     user_id uuid,
-    FOREIGN KEY (user_id) REFERENCES users(user_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     family_id INT,
     FOREIGN KEY (family_id) REFERENCES family(family_id) 
     

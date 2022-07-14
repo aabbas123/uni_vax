@@ -37,7 +37,7 @@ router.post("/register", validInfo, async (req, res) => {
         // verify if user exists
         const user = await pool.query("SELECT * FROM users WHERE user_email =$1 AND user_phone =$2", [email, phoneNumber]);
 
-
+        console.log(user.rows);
         if (user.rows.length != 0) {
             return res.status(401).send("User already exist");
         }
@@ -48,7 +48,7 @@ router.post("/register", validInfo, async (req, res) => {
         const bcryptPassword = await bcrypt.hash(password, salt);
         const verificationToken = jwt.sign({ email: email }, process.env.VERFICATION_KEY, { expiresIn: "1hr" });
 
-        const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName,email, phoneNumber, bcryptPassword, verificationToken, false]);
+        const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName,email, phoneNumber, bcryptPassword, verificationToken, true]);
         //res.json(newUser.rows[0]);
         const user_id = newUser.rows[0].user_id;
         const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country,state,zip, user_id]);
@@ -65,7 +65,7 @@ router.post("/register", validInfo, async (req, res) => {
 
     let info = await transporter().sendMail(emailData);
         console.log(info.messageId);
-        return res.status(200).json({ message: "Register success, verfication email has been sent" });
+        return res.status(200).json({ message: "Register successfully, verfication email has been sent" });
 
         //const token = jwtGenerator(newUser.rows[0].user_id);
         //return res.json({ token });
@@ -90,7 +90,7 @@ router.get("/verify/:token",async(req,res)=>{
         if(user.rows.length===0){
             return res.status(400).json({message:"invalid token"});
         }
-        const updateUser =await pool.query("UPDATE users SET isverified =$1,verification_token=$2 WHERE user_email =$3 AND verification_token=$4",[false,'',email,token]);
+        const updateUser =await pool.query("UPDATE users SET isverified =$1,verification_token=$2 WHERE user_email =$3 AND verification_token=$4",[true,'',email,token]);
         const tok = jwtGenerator(user.rows[0].user_id);
         return res.json({ token:tok });
         
@@ -110,7 +110,7 @@ router.post("/login", async (req, res) => {
 
         const { email, phoneNumber, password } = req.body;
 
-        if (!email && !phoneNumber && !password) {
+        if (!email || !phoneNumber && !password) {
             return res.status(400).json({ message: " email,  phone number or password is missing " });
         }
 
@@ -120,8 +120,12 @@ router.post("/login", async (req, res) => {
         if (user.rows.length === 0) {
             return res.status(401).json(" incorrect credentials ");
         }
-
-
+          //verifiy the user
+        const checkIfverified=await pool.query("SELECT * from users WHERE user_email=$1 AND isverified=$2",[email,true]);
+         if(checkIfverified.rows.length === 0){
+            return res.status(403).json({message: "This user is not verified"})
+         }
+       // return res.status(403).json({message: ""})
 
         //3 check if the incoming password is the same the database password
 
