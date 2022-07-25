@@ -39,7 +39,7 @@ router.post("/register", validInfo, async (req, res) => {
 
 
         if (user.rows.length != 0) {
-            return res.status(401).send("User already exist");
+            return res.status(401).json({message:"User already exist"});
         }
 
         const saltRound = 10;
@@ -124,8 +124,9 @@ router.post("/login", async (req, res) => {
         //2. check if user does not exist (if not then we throw error)
         const user = await pool.query("SELECT * FROM users WHERE user_email = $1 OR user_phone =$2", [email, phoneNumber]);
 
+       
         if (user.rows.length === 0) {
-            return res.status(401).json(" incorrect credentials ");
+            return res.status(401).json({message:" incorrect credentials "});
         }
         //verifiy the user
         const checkIfverified = await pool.query("SELECT * from users WHERE user_email=$1 AND isverified=$2", [email, true]);
@@ -138,9 +139,9 @@ router.post("/login", async (req, res) => {
 
         const validPassword = await bcrypt.compare(password, user.rows[0].user_password);
         if (!validPassword) {
-            return res.status(401).json("Password or Email is incorrect ");
+            return res.status(401).json({message:"Password or Email is incorrect "});
         }
-
+        return res.status(200).json({ message: "You have been login successfully" });
         // 4 give them the jwt token 
 
         const token = jwtGenerator(user.rows[0].user_id);
@@ -196,7 +197,7 @@ router.get("/reset/:token", async (req, res) => {
 
         let decoded = jwt.verify(token, process.env.PASSWORD_RESET_KEY);
         const { id, email } = decoded;
-        return res.status(200).json({ message: "Link is not Valid" });
+        return res.status(200).json({ message: "Link is Valid" });
     } catch (err) {
         console.log(err.message);
         res.status(500).json({ message: "Invalid Link" });
