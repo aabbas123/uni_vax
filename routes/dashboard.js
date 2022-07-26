@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const authorization = require("../middleware/authorization");
 const bcrypt = require("bcrypt");
+const bcrypt = require('bcryptjs');
 //const authorize = require("../middleware/authorize");
 const pool = require("../db");
 const getDays = require("../utils/getDays");
