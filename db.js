@@ -1,13 +1,13 @@
-const Pool =require("pg").Pool
+const Pool = require("pg").Pool
 
 const pool = new Pool(
     {
-        user:"postgres",
-        password:"pppl1822",
-        host:"localhost",
-        port:5432,
-        database:"univax"
+        user: process.env.dbuser || "postgres",
+        password: process.env.dbpassword || "pppl1822",
+        host: process.env.dbhost || "localhost",
+        port: process.env.dbport || 5432,
+        database: process.env.dbname || "univax"
     }
 );
 
-module.exports =pool; 
+module.exports = pool; 
