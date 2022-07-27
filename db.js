@@ -6,8 +6,12 @@ const pool = new Pool(
         password: process.env.dbpassword || "pppl1822",
         host: process.env.dbhost || "localhost",
         port: process.env.dbport || 5432,
-        database: process.env.dbname || "univax"
+        database: process.env.dbname || "univax",
+        ssl: {    /* <----- Add SSL option */
+        rejectUnauthorized: false,
+      }
     }
+
 );
 
 module.exports = pool; 
