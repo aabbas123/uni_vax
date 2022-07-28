@@ -66,7 +66,7 @@ router.post("/register", validInfo, async (req, res) => {
 
         let info = await transporter().sendMail(emailData);
         console.log(info.messageId);
-        return res.status(200).json({ message: "Register successfully, verfication email has been sent" });
+        return res.status(200).json({ message: "Registeration has been done successfully" });
 
         //const token = jwtGenerator(newUser.rows[0].user_id);
         //return res.json({ token });
