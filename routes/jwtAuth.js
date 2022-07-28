@@ -100,7 +100,7 @@ router.get("/verify/:token", async (req, res) => {
        //const tok = jwtGenerator(user.rows[0].user_id);
        //return res.json({token:tok});
        
-        return res.json({ message:"Your account has been verified, you can login now"});  
+        return res.status(200).json({ message:"Your account has been verified, you can login now"});  
 
 
 

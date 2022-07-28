@@ -106,16 +106,6 @@ CREATE TABLE Gender
 
 
 
-
-
-
-
-
-
-
-
-
-
 user_id VARCHAR REFERENCES users(user_id) ON DELETE CASCADE
 
 
