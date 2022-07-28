@@ -130,10 +130,10 @@ router.post("/login", async (req, res) => {
             return res.status(401).json({message:" incorrect credentials "});
         }
         //verifiy the user
-        const checkIfverified = await pool.query("SELECT * from users WHERE user_email=$1 AND isverified=$2", [email, true]);
-        if (checkIfverified.rows.length === 0) {
-            return res.status(403).json({ message: "This user is not verified" })
-        }
+         const checkIfverified = await pool.query("SELECT * from users WHERE user_email=$1  ", [email]);
+         if (checkIfverified.rows.length === 0) {
+            //return res.status(403).json({ message: "This user is not verified " })
+         }
         // return res.status(403).json({message: ""})
 
         //3 check if the incoming password is the same the database password
