@@ -20,7 +20,7 @@ function transporter() {
 
 
 router.post("/register", validInfo, async (req, res) => {
-
+    console.log(req.body);
     try {
 
         const { userName, email, phoneNumber, password, firstName, lastName, dateOfbirth, home, country, state, zip, genderType } = req.body;
@@ -28,6 +28,8 @@ router.post("/register", validInfo, async (req, res) => {
         if (!email || !phoneNumber || !password || !firstName || !lastName || !dateOfbirth || !home || !country || !genderType) {
             return res.status(400).json({ message: "All input fields are required " })
         }
+
+        
         // verify if user exists
         //hash password
         //create the user with the email-phone and password 
