@@ -51,7 +51,7 @@ router.post("/register", validInfo, async (req, res) => {
         const bcryptPassword = await bcrypt.hash(password, salt);
         const verificationToken = jwt.sign({ email: email }, process.env.VERFICATION_KEY, { expiresIn: "1hr" });
 
-        const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName, email, phoneNumber, bcryptPassword, verificationToken, false]);
+        const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName, email, phoneNumber, bcryptPassword, verificationToken, true]);
         //res.json(newUser.rows[0]);
         const user_id = newUser.rows[0].user_id;
        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, state, zip, user_id]);
@@ -66,8 +66,8 @@ router.post("/register", validInfo, async (req, res) => {
     <p>${process.env.CLIENT_URL}/verify/${verificationToken}</p>  
     `  }
 
-       // let info = await transporter().sendMail(emailData);
-       // console.log(info.messageId);
+      // let info = await transporter().sendMail(emailData);
+      // console.log(info.messageId);
         return res.status(200).json({ message: "Registeration has been done successfully" });
 
         //const token = jwtGenerator(newUser.rows[0].user_id);
