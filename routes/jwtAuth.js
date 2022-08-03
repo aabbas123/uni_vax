@@ -20,7 +20,7 @@ function transporter() {
 
 
 router.post("/register", validInfo, async (req, res) => {
-    
+
     try {
 
         const { userName, email, phoneNumber, password, firstName, lastName, dateOfbirth, home, country, state, zip, genderType } = req.body;
@@ -29,7 +29,7 @@ router.post("/register", validInfo, async (req, res) => {
             return res.status(400).json({ message: "All input fields are required " })
         }
 
-        
+
         // verify if user exists
         //hash password
         //create the user with the email-phone and password 
@@ -40,11 +40,11 @@ router.post("/register", validInfo, async (req, res) => {
         // verify if user exists
         const user = await pool.query("SELECT * FROM users WHERE user_email =$1 AND user_phone =$2", [email, phoneNumber]);
 
-     //   console.log(user.rows);
+        //   console.log(user.rows);
         if (user.rows.length != 0) {
-            return res.status(401).json({message:"User already exist"});
+            return res.status(401).json({ message: "User already exist" });
         }
-        
+
         const saltRound = 10;
 
         const salt = await bcrypt.genSalt(saltRound);
@@ -54,7 +54,7 @@ router.post("/register", validInfo, async (req, res) => {
         const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName, email, phoneNumber, bcryptPassword, verificationToken, true]);
         //res.json(newUser.rows[0]);
         const user_id = newUser.rows[0].user_id;
-       const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, state, zip, user_id]);
+        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, state, zip, user_id]);
 
         const emailData = {
             from: process.env.EMAIL_USER,
@@ -66,8 +66,8 @@ router.post("/register", validInfo, async (req, res) => {
     <p>${process.env.CLIENT_URL}/verify/${verificationToken}</p>  
     `  }
 
-      // let info = await transporter().sendMail(emailData);
-      // console.log(info.messageId);
+        // let info = await transporter().sendMail(emailData);
+        // console.log(info.messageId);
         return res.status(200).json({ message: "Registeration has been done successfully" });
 
         //const token = jwtGenerator(newUser.rows[0].user_id);
@@ -75,7 +75,7 @@ router.post("/register", validInfo, async (req, res) => {
 
     } catch (err) {
         console.error(err)
-        res.status(500).json({message:"Server error"});
+        res.status(500).json({ message: "Server error" });
     }
 
 
@@ -90,19 +90,19 @@ router.get("/verify/:token", async (req, res) => {
         let decoded = jwt.verify(token, process.env.VERFICATION_KEY);
         const { email } = decoded;
         const verifiedUser = await pool.query("SELECT * FROM users where user_email = $1", [email]);
-       console.log('logs',verifiedUser.rows[0]);
-       if(verifiedUser.rows[0].isverified){
-           return res.status(400).json({message:"Account is verified"});
+        console.log('logs', verifiedUser.rows[0]);
+        if (verifiedUser.rows[0].isverified) {
+            return res.status(400).json({ message: "Account is verified" });
         }
         const user = await pool.query("SELECT * FROM users where user_email = $1 AND verification_token=$2", [email, token]);
         if (user.rows.length === 0) {
             return res.status(400).json({ message: "Invalid Link" });
         }
         const updateUser = await pool.query("UPDATE users SET isverified =$1,verification_token=$2 WHERE user_email =$3 AND verification_token=$4", [true, '', email, token]);
-       //const tok = jwtGenerator(user.rows[0].user_id);
-       //return res.json({token:tok});
-       
-        return res.status(200).json({ message:"Your account has been verified, you can login now"});  
+        //const tok = jwtGenerator(user.rows[0].user_id);
+        //return res.json({token:tok});
+
+        return res.status(200).json({ message: "Your account has been verified, you can login now" });
 
 
 
@@ -127,36 +127,48 @@ router.post("/login", async (req, res) => {
         //2. check if user does not exist (if not then we throw error)
         const user = await pool.query("SELECT * FROM users WHERE user_email = $1 OR user_phone =$2", [email, phoneNumber]);
 
-       
+
         if (user.rows.length === 0) {
-            return res.status(401).json({message:" incorrect credentials "});
+            return res.status(401).json({ message: " incorrect credentials " });
         }
         //verifiy the user
-         const checkIfverified = await pool.query("SELECT * from users WHERE user_email=$1  ", [email]);
-         if (checkIfverified.rows.length === 0) {
+        const checkIfverified = await pool.query("SELECT * from users WHERE user_email=$1  ", [email]);
+        if (checkIfverified.rows.length === 0) {
             //return res.status(403).json({ message: "This user is not verified " })
-         }
+        }
         // return res.status(403).json({message: ""})
 
         //3 check if the incoming password is the same the database password
 
         const validPassword = await bcrypt.compare(password, user.rows[0].user_password);
         if (!validPassword) {
-            return res.status(401).json({message:"Password or Email is incorrect "});
+            return res.status(401).json({ message: "Password or Email is incorrect " });
         }
-        return res.status(200).json({ message: "You have been login successfully" });
         // 4 give them the jwt token 
-
         const token = jwtGenerator(user.rows[0].user_id);
-        res.json({ token });
-
-
+        res.cookie('token', token,{
+            httpOnly: true,
+            path: '/user/token',
+            maxAge: 1000 * 60 * 60 * 10
+        })
+        return res.status(200).json({ message: "You have been login successfully" });
 
     } catch (err) {
-        console.error(err.message)
-        res.status(500).send("Server error")
+        console.log(err);
+        res.status(500).json({ message: "Server error" })
     }
 });
+
+router.get("/logout", async (req, res) => {
+    try {
+        res.cookie('token','', { path: '/user/token' ,maxAge:0});
+        res.clearCookie('token', { path: '/user/token' });
+        return res.status(200).json({ message: "Logout success" });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+
+})
 
 
 
