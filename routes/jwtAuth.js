@@ -164,7 +164,7 @@ router.get("/logout", async (req, res) => {
     try {
        // res.cookie('token','', { path: '/user/token' ,maxAge:0});
        // res.clearCookie('token', { path: '/user/token' });
-        const updateUser = await pool.query("UPDATE users SET token=$1 WHERE user_email=$2",['',req.user.id]);
+        const updateUser = await pool.query("UPDATE users SET token=$1 WHERE user_id=$2",['',req.user.id]);
         return res.status(200).json({ message: "Logout success" });
     } catch (err) {
         res.status(500).json({ message: "Server error" });
