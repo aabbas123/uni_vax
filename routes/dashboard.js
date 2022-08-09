@@ -81,7 +81,20 @@ router.put("/vaccine_detail/:id", authorization, async (req, res) => {
 });
 
 
+// Get the profile of parent
 
+router.get("/profile",authorization,async(req,res) =>{
+   try {
+    
+    const userProfile = await pool.query("SELECT * FROM profile where user_id =$1 ",[req.user.id]);
+    return res.status(200).json(userProfile.rows[0]);
+
+   }catch (err){
+  //  console.error(err.message);
+    return res.status(500).json({message:"Server error"});
+   }
+
+})
 
 
 

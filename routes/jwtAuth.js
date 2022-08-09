@@ -54,7 +54,7 @@ router.post("/register", validInfo, async (req, res) => {
         const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName, email, phoneNumber, bcryptPassword, verificationToken, true]);
         //res.json(newUser.rows[0]);
         const user_id = newUser.rows[0].user_id;
-        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, state, zip, user_id]);
+        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_email,phone_number,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, state, zip,email,phoneNumber, user_id]);
 
         const emailData = {
             from: process.env.EMAIL_USER,
@@ -146,12 +146,13 @@ router.post("/login", async (req, res) => {
         }
         // 4 give them the jwt token 
         const token = jwtGenerator(user.rows[0].user_id);
-        res.cookie('token', token,{
-            httpOnly: true,
-            path: '/user/token',
-            maxAge: 1000 * 60 * 60 * 10
-        })
-        return res.status(200).json({ message: "You have been login successfully" });
+        // res.cookie('token', token,{
+        //    // httpOnly: true,
+        //     path: '/user/token',
+        //     maxAge: 1000 * 60 * 60 * 10
+        // })
+        const updateUser = await pool.query("UPDATE users SET token=$1 WHERE user_email=$2",[token,email]);
+        return res.status(200).json({ message: "You have been login successfully",token });
 
     } catch (err) {
         console.log(err);
@@ -161,8 +162,9 @@ router.post("/login", async (req, res) => {
 
 router.get("/logout", async (req, res) => {
     try {
-        res.cookie('token','', { path: '/user/token' ,maxAge:0});
-        res.clearCookie('token', { path: '/user/token' });
+       // res.cookie('token','', { path: '/user/token' ,maxAge:0});
+       // res.clearCookie('token', { path: '/user/token' });
+        const updateUser = await pool.query("UPDATE users SET token=$1 WHERE user_email=$2",['',req.user.id]);
         return res.status(200).json({ message: "Logout success" });
     } catch (err) {
         res.status(500).json({ message: "Server error" });

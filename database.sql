@@ -9,6 +9,7 @@ user_password VARCHAR(255) NOT NULL,
 reset_token VARCHAR(255),
 verification_token VARCHAR(255),
 isverified BOOLEAN,
+token VARCHAR(255),
 
 
 PRIMARY KEY (user_id)
@@ -42,6 +43,9 @@ CREATE TABLE profile(
     country VARCHAR(255) NOT NULL,
     state VARCHAR(255) NOT NULL,
     zip_code VARCHAR(255) NOT NULL,
+    user_email VARCHAR(255) NOT NULL,
+    phone_number VARCHAR(255),
+    
     user_id uuid,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     family_id INT,
