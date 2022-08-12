@@ -8,7 +8,7 @@ const pool = new Pool(
         host: process.env.dbhost || "localhost",
         port: process.env.dbport || 5432,
         database: process.env.dbname || "univax",
-       ssl: {    /* <----- Add SSL option */
+      ssl: {    /* <----- Add SSL option */
         rejectUnauthorized: false,
       }
     }

@@ -127,6 +127,9 @@ router.post("/login", async (req, res) => {
         //2. check if user does not exist (if not then we throw error)
         const user = await pool.query("SELECT * FROM users WHERE user_email = $1 OR user_phone =$2", [email, phoneNumber]);
 
+        //if (user.rows.length != 0) {
+          //  return res.status(401).json({ message: "User already login" });
+       // }
 
         if (user.rows.length === 0) {
             return res.status(401).json({ message: " incorrect credentials " });
@@ -155,18 +158,21 @@ router.post("/login", async (req, res) => {
         return res.status(200).json({ message: "You have been login successfully",token });
 
     } catch (err) {
-        console.log(err);
+       // console.log(err);
         res.status(500).json({ message: "Server error" })
     }
 });
 
-router.get("/logout", async (req, res) => {
+router.get("/logout",authorization, async (req, res) => {
     try {
+
        // res.cookie('token','', { path: '/user/token' ,maxAge:0});
        // res.clearCookie('token', { path: '/user/token' });
-        const updateUser = await pool.query("UPDATE users SET token=$1 WHERE user_email=$2",['',req.user.id]);
+        const updateUser = await pool.query("UPDATE users SET token=$1 WHERE user_id=$2",['',req.user.id]);
+        console.log(updateUser.rows);
         return res.status(200).json({ message: "Logout success" });
     } catch (err) {
+        console.log(err);
         res.status(500).json({ message: "Server error" });
     }
 
@@ -216,7 +222,7 @@ router.get("/reset/:token", async (req, res) => {
         const { id, email } = decoded;
         return res.status(200).json({ message: "Link is Valid" });
     } catch (err) {
-        console.log(err.message);
+        //console.log(err.message);
         res.status(500).json({ message: "Invalid Link" });
 
     }

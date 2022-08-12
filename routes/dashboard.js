@@ -30,18 +30,30 @@ router.get("/", authorization, async (req, res) => {
     }
 });
 
-
+// router.get("/logout",authorization, async (req, res) => {
+//         try {
+    
+//            // res.cookie('token','', { path: '/user/token' ,maxAge:0});
+//            // res.clearCookie('token', { path: '/user/token' });
+//             const updateUser = await pool.query("UPDATE users SET token=$1 WHERE user_id=$2",['',req.user.id]);
+//             return res.status(200).json({ message: "Logout success" });
+//         } catch (err) {
+//             console.log(err);
+//             res.status(500).json({ message: "Server error" });
+//         }
+    
+//     })
 
 
 // Create the deatail of vacation for the parent 
 
 router.post("/vaccine_detail", authorization, async (req, res) => {
     try {
-        const { vax_name, vax_date, name_of_provider, user_id } = req.body;
+        const { vax_name, vax_date, name_of_provider } = req.body;
         const vaccineInUse = await pool.query("SELECT vax_name from vaccine_detail WHERE vax_name = $1 AND user_id =$2", [vax_name, req.user.id]);
-        if (vaccineInUse.rows.length > 0) {
-            return res.status(405).send("You already got this vaccine ");
-        }
+      //  if (vaccineInUse.rows.length > 0) {
+       //     return res.status(405).send("You already got this vaccine ");
+       // }
 
         const newVaccine = await pool.query(
             "INSERT INTO vaccine_detail (vax_name, vax_date,name_of_provider,user_id) VALUES ($1, $2, $3, $4) RETURNING *", [vax_name, vax_date, name_of_provider, req.user.id]
@@ -51,7 +63,7 @@ router.post("/vaccine_detail", authorization, async (req, res) => {
         );
 
 
-        res.json(newVaccine.rows[0]);
+        res.json({data:newVaccine.rows[0]});
     } catch (err) {
         console.log(err.message);
     }
@@ -72,13 +84,61 @@ router.put("/vaccine_detail/:id", authorization, async (req, res) => {
 
 
 
-        res.json("Vaccine_detail has been updated");
+        res.status(200).json({message:"Vaccine_detail has been updated"});
+        
 
     }
     catch (err) {
         console.error(err.message);
+        return res.status(500).json({message:"Server error"});
     }
 });
+
+
+// Delete the vaccine 
+router.delete("/vaccine_detail/:id",authorization,async(req,res) => {
+    try{
+        const { id } = req.params;
+        const deleteVax = await pool.query("DELETE from vaccine_detail WHERE vax_id = $1 AND user_id = $2 RETURNING *",
+        [id,req.user.id]);
+        if(deleteVax.rows.length === 0){
+            return res.json({message:"This vaccine is not yours"});
+        }
+    } catch(err){
+        console.error(err.message)
+        return res.status(500).json({message:"Server error"});
+    }
+   
+})
+
+// Get the all vaccine of  a single user
+
+router.get("/vaccine_detail/:id",authorization,async(req,res) => {
+    try{
+        const { id } = req.params;
+        const allVax = await pool.query("SELECT * from vaccine_detail WHERE vax_id = $1 AND user_id = $2 RETURNING *",
+        [id,req.user.id]);
+        return res.status(200).json({data:allVax.rows});
+    } catch(err){
+        console.error(err.message)
+        return res.status(500).json({message:"Server error"});
+    }
+   
+})
+
+// Get a vaccine_detail of a single user
+router.get("/vaccine_detail",authorization,async(req,res) =>{
+    try {
+     
+     const singleVax = await pool.query("SELECT * FROM vaccine_detail where user_id =$1 ",[req.user.id]);
+     return res.status(200).json({data:singleVax.rows[0]});
+ 
+    }catch (err){
+   //  console.error(err.message);
+     return res.status(500).json({message:"Server error"});
+    }
+ 
+ })
 
 
 // Get the profile of parent
@@ -87,7 +147,7 @@ router.get("/profile",authorization,async(req,res) =>{
    try {
     
     const userProfile = await pool.query("SELECT * FROM profile where user_id =$1 ",[req.user.id]);
-    return res.status(200).json(userProfile.rows[0]);
+    return res.status(200).json({data:userProfile.rows[0]});
 
    }catch (err){
   //  console.error(err.message);
