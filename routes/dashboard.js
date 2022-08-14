@@ -113,25 +113,26 @@ router.delete("/vaccine_detail/:id",authorization,async(req,res) => {
 
 // Get the all vaccine of  a single user
 
-router.get("/vaccine_detail/:id",authorization,async(req,res) => {
-    try{
-        const { id } = req.params;
-        const allVax = await pool.query("SELECT * from vaccine_detail WHERE vax_id = $1 AND user_id = $2 RETURNING *",
-        [id,req.user.id]);
-        return res.status(200).json({data:allVax.rows});
-    } catch(err){
-        console.error(err.message)
-        return res.status(500).json({message:"Server error"});
-    }
+// router.get("/vaccine_detail",authorization,async(req,res) => {
+//     try{
+//        // const { id } = req.params;
+//         const allVax = await pool.query("SELECT * from vaccine_detail  user_id = $2 RETURNING *",
+//         [id,req.user.id]);
+//         return res.status(200).json({data:allVax.rows});
+//     } catch(err){
+//         console.error(err.message)
+//         return res.status(500).json({message:"Server error"});
+//     }
    
-})
+// })
 
-// Get a vaccine_detail of a single user
+// Get all vaccine
 router.get("/vaccine_detail",authorization,async(req,res) =>{
     try {
      
-     const singleVax = await pool.query("SELECT * FROM vaccine_detail where user_id =$1 ",[req.user.id]);
-     return res.status(200).json({data:singleVax.rows[0]});
+     const vaxList = await pool.query("SELECT * FROM vaccine_detail where user_id =$1 ",[req.user.id]);
+     
+     return res.status(200).json({data:vaxList.rows});
  
     }catch (err){
    //  console.error(err.message);
@@ -146,7 +147,7 @@ router.get("/vaccine_detail",authorization,async(req,res) =>{
 router.get("/profile",authorization,async(req,res) =>{
    try {
     
-    const userProfile = await pool.query("SELECT * FROM profile where user_id =$1 ",[req.user.id]);
+    const userProfile = await pool.query("SELECT * FROM profile where user_id =$1 ORDER BY vax_id DESC",[req.user.id]);
     return res.status(200).json({data:userProfile.rows[0]});
 
    }catch (err){
