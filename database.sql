@@ -44,6 +44,7 @@ CREATE TABLE profile(
     state VARCHAR(255) NOT NULL,
     zip_code VARCHAR(255) NOT NULL,
     user_email VARCHAR(255) NOT NULL,
+    
     phone_number VARCHAR(255),
     
     user_id uuid,

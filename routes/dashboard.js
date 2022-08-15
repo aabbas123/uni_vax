@@ -104,6 +104,8 @@ router.delete("/vaccine_detail/:id",authorization,async(req,res) => {
         if(deleteVax.rows.length === 0){
             return res.json({message:"This vaccine is not yours"});
         }
+        res.status(200).json({message:"Vaccine has been deleted "});
+        
     } catch(err){
         console.error(err.message)
         return res.status(500).json({message:"Server error"});
@@ -130,7 +132,7 @@ router.delete("/vaccine_detail/:id",authorization,async(req,res) => {
 router.get("/vaccine_detail",authorization,async(req,res) =>{
     try {
      
-     const vaxList = await pool.query("SELECT * FROM vaccine_detail where user_id =$1 ",[req.user.id]);
+     const vaxList = await pool.query("SELECT * FROM vaccine_detail where user_id =$1  ORDER BY vax_id DESC",[req.user.id]);
      
      return res.status(200).json({data:vaxList.rows});
  
@@ -147,7 +149,7 @@ router.get("/vaccine_detail",authorization,async(req,res) =>{
 router.get("/profile",authorization,async(req,res) =>{
    try {
     
-    const userProfile = await pool.query("SELECT * FROM profile where user_id =$1 ORDER BY vax_id DESC",[req.user.id]);
+    const userProfile = await pool.query("SELECT * FROM profile where user_id =$1",[req.user.id]);
     return res.status(200).json({data:userProfile.rows[0]});
 
    }catch (err){
