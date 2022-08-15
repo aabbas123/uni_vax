@@ -209,7 +209,7 @@ router.post("/forgot", async (req, res) => {
 
     } catch (err) {
         console.error(err.message);
-        res.status(500).send("Server error");
+        res.status(500).send({message:"Server error"});
     }
 })
 
@@ -252,7 +252,7 @@ router.put('/update-password', async (req, res) => {
         return res.status(200).json({ message: "Your password has been updated " });
     }
     catch (err) {
-        console.log(err.message);
+        console.log(err);
         res.status(500).json({ message: "Server error" });
     }
 
