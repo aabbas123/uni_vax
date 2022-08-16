@@ -51,10 +51,10 @@ router.post("/register", validInfo, async (req, res) => {
         const bcryptPassword = await bcrypt.hash(password, salt);
         const verificationToken = jwt.sign({ email: email }, process.env.VERFICATION_KEY, { expiresIn: "1hr" });
 
-        const newUser = await pool.query("INSERT INTO users (user_name,user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5,$6) RETURNING *", [userName, email, phoneNumber, bcryptPassword, verificationToken, true]);
+        const newUser = await pool.query("INSERT INTO users (user_email,user_phone,user_password,verification_token,isverified) VALUES($1,$2,$3,$4,$5) RETURNING *", [ email, phoneNumber, bcryptPassword, verificationToken, true]);
         //res.json(newUser.rows[0]);
         const user_id = newUser.rows[0].user_id;
-        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_email,phone_number,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, state, zip,email,phoneNumber, user_id]);
+        const newprofile = await pool.query("INSERT INTO profile(first_name,last_name,date_of_birth,gender,home_address,country,state,zip_code,user_email,phone_number,user_name,user_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *", [firstName, lastName, dateOfbirth, genderType, home, country, state, zip,email,phoneNumber,userName,user_id]);
 
         const emailData = {
             from: process.env.EMAIL_USER,
@@ -74,7 +74,7 @@ router.post("/register", validInfo, async (req, res) => {
         //return res.json({ token });
 
     } catch (err) {
-        console.error(err)
+        console.log(err);
         res.status(500).json({ message: "Server error" });
     }
 
@@ -217,8 +217,9 @@ router.post("/forgot", async (req, res) => {
 router.get("/reset/:token", async (req, res) => {
     try {
         const { token } = req.params;
-
+        //verify the token
         let decoded = jwt.verify(token, process.env.PASSWORD_RESET_KEY);
+        //get id and email from token
         const { id, email } = decoded;
         return res.status(200).json({ message: "Link is Valid" });
     } catch (err) {
@@ -235,6 +236,7 @@ router.put('/update-password', async (req, res) => {
 
 
     try {
+        //pick token from req and body
         const { token, password } = req.body;
         //const{password} = req.body.password;
 
